@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import App from './App';
 
-const Home = () => {
+const StartScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Willkommen zur Startseite</Text>
+      <Text style={styles.text}>Startbildschirm</Text>
     </View>
   );
 };
@@ -13,13 +12,14 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: 'white',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  text: {
+    color: 'black',
+    fontSize: 24,
   },
 });
 
-export default App;
+export default StartScreen;
