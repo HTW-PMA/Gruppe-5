@@ -1,28 +1,43 @@
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoadingScreen from './LoadingScreen';
 import StartScreen from './StartScreen';
+import MenuScreen from './MenuScreen';
+
+export type RootStackParamList = {
+  StartScreen: undefined;
+  MenuScreen: { canteenId: string };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleLoadingComplete = () => {
-    console.log('handleLoadingComplete aufgerufen'); // Hinzugefügt
     setIsLoading(false);
   };
 
-  console.log('isLoading:', isLoading); // Hinzugefügt
-
-  if (isLoading) {
-    console.log('Rendering LoadingScreen');
-    return <LoadingScreen onLoadingComplete={handleLoadingComplete} />;
-  }
-  
-
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <StartScreen />
-    </SafeAreaView>
+    <NavigationContainer independent={true}>
+      {isLoading ? (
+        <LoadingScreen onLoadingComplete={handleLoadingComplete} />
+      ) : (
+        <Stack.Navigator>
+          <Stack.Screen
+            name="StartScreen"
+            component={StartScreen}
+            options={{ title: 'Mensa Liste' }}
+          />
+          <Stack.Screen
+            name="MenuScreen"
+            component={MenuScreen}
+            options={{ title: 'Mensa Menü' }}
+          />
+        </Stack.Navigator>
+      )}
+    </NavigationContainer>
   );
 };
 

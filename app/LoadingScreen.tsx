@@ -46,6 +46,10 @@ const LoadingScreen = ({ onLoadingComplete }: { onLoadingComplete: () => void })
         await FileSystem.writeAsStringAsync(canteenFileUri, JSON.stringify(canteens, null, 2));
         console.log('Canteen data saved at:', canteenFileUri);
 
+        // Existenzprüfung nach dem Speichern
+        const fileExists = await FileSystem.getInfoAsync(canteenFileUri);
+        console.log('File exists after save:', fileExists.exists);
+
         // 2. IDs extrahieren und Menüs abrufen
         const startDate = format(addDays(new Date(), -7), 'yyyy-MM-dd'); // 7 Tage in der Vergangenheit
         const endDate = format(addDays(new Date(), 7), 'yyyy-MM-dd'); // 7 Tage in der Zukunft
