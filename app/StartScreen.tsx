@@ -13,7 +13,8 @@ import * as FileSystem from 'expo-file-system';
 import * as Location from 'expo-location';
 import { getDistance } from 'geolib';
 import { format, getDay } from 'date-fns';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, NavigationProp, useFocusEffect  } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from './App'; // Pfad anpassen, falls App.tsx woanders liegt
 
 
@@ -59,6 +60,7 @@ interface Canteen {
 const StartScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [canteens, setCanteens] = useState<Canteen[]>([]);
+  const [likedCanteens, setLikedCanteens] = useState<{ id: string; name: string }[]>([]);
   const [filteredCanteens, setFilteredCanteens] = useState<Canteen[]>([]);
   const [searchText, setSearchText] = useState('');
   const [expandedCanteens, setExpandedCanteens] = useState<Set<string>>(new Set());
@@ -70,47 +72,73 @@ const StartScreen = () => {
   const [useLocation, setUseLocation] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
   const jsonFilePath = `${FileSystem.documentDirectory}/data/canteen_data.json`;
+  const likedFilePath = `${FileSystem.documentDirectory}/data/liked_canteens.json`;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fileExists = await FileSystem.getInfoAsync(jsonFilePath);
-        if (!fileExists.exists) {
-          console.warn('Die Datei existiert nicht:', jsonFilePath);
-          setCanteens([]);
-          return;
-        }
-
-        const fileContent = await FileSystem.readAsStringAsync(jsonFilePath);
-        const data: Canteen[] = JSON.parse(fileContent);
-        setCanteens(data);
-        setFilteredCanteens(data);
-      } catch (error) {
-        console.error('Fehler beim Laden der JSON-Datei:', error);
-      }
-    };
-
-    const fetchLocation = async () => {
-      if (!useLocation) return;
-
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.warn('Standortberechtigung verweigert.');
-        setUseLocation(false);
+  // Funktionen auslagern
+  const fetchData = async () => {
+    try {
+      const fileExists = await FileSystem.getInfoAsync(jsonFilePath);
+      if (!fileExists.exists) {
+        console.warn('Die Datei existiert nicht:', jsonFilePath);
+        setCanteens([]);
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-    };
+      const fileContent = await FileSystem.readAsStringAsync(jsonFilePath);
+      const data: Canteen[] = JSON.parse(fileContent);
+      setCanteens(data);
+      setFilteredCanteens(data);
+    } catch (error) {
+      console.error('Fehler beim Laden der JSON-Datei:', error);
+    }
+  };
 
+  const loadLikedCanteens = async () => {
+    try {
+      const likedFileExists = await FileSystem.getInfoAsync(likedFilePath);
+      if (likedFileExists.exists) {
+        const likedContent = await FileSystem.readAsStringAsync(likedFilePath);
+        setLikedCanteens(JSON.parse(likedContent));
+      } else {
+        setLikedCanteens([]);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der gespeicherten Likes:', error);
+    }
+  };
+
+  const fetchLocation = async () => {
+    if (!useLocation) return;
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.warn('Standortberechtigung verweigert.');
+      setUseLocation(false);
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+    setUserLocation({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
+  };
+
+  // Daten beim Initialrender laden
+  useEffect(() => {
     fetchData();
     fetchLocation();
+    loadLikedCanteens();
   }, []);
 
+  // Daten neu laden, wenn der Screen fokussiert wird
+  useFocusEffect(
+    React.useCallback(() => {
+      loadLikedCanteens();
+    }, [])
+  );
+
+  // Filter anwenden
   useEffect(() => {
     applyFilters();
   }, [searchText, filterOptions, userLocation]);
@@ -140,12 +168,23 @@ const StartScreen = () => {
         const isOpen = todayHours.some(
           (hours) => hours.openAt <= now && hours.closeAt >= now
         );
-        return isOpen || todayHours.length === 0; // Zeige auch, wenn Öffnungszeiten unbekannt sind
+        return isOpen || todayHours.length === 0;
       });
     }
 
     setFilteredCanteens(filtered);
   };
+
+  const toggleLike = async (canteenId: string, canteenName: string) => {
+    const isLiked = likedCanteens.some((item) => item.id === canteenId);
+    const updatedLikes = isLiked
+      ? likedCanteens.filter((item) => item.id !== canteenId)
+      : [...likedCanteens, { id: canteenId, name: canteenName }];
+  
+    setLikedCanteens(updatedLikes);
+  
+    await FileSystem.writeAsStringAsync(likedFilePath, JSON.stringify(updatedLikes));
+  };  
 
   const toggleExpand = (canteenId: string) => {
     setExpandedCanteens((prev) => {
@@ -163,6 +202,7 @@ const StartScreen = () => {
     const todayIndex = (getDay(new Date()) + 6) % 7;
     const todayHours = item.businessDays[todayIndex]?.businessHours || [];
     const isExpanded = expandedCanteens.has(item.id);
+    const isLiked = likedCanteens.some((likedItem) => likedItem.id === item.id);
   
     const hasNoBusinessHours = item.businessDays.every(
       (day: BusinessDay) => day.businessHours.length === 0
@@ -193,14 +233,27 @@ const StartScreen = () => {
                 : 'Geschlossen'}
             </Text>
           </View>
+    
+          {/* Like-Button hinzufügen */}
+          <TouchableOpacity onPress={() => toggleLike(item.id, item.name)}>
+            <Ionicons
+              style={styles.heart}
+              name={isLiked ? 'heart' : 'heart-outline'}
+              size={24}
+              color={isLiked ? 'red' : 'black'}
+            />
+          </TouchableOpacity>
+    
           <Text style={styles.arrow}>›</Text>
         </View>
+    
         <TouchableOpacity
           onPress={() => toggleExpand(item.id)}
           style={styles.expandToggle}
         >
           <Text style={styles.expandArrow}>{isExpanded ? '△' : '▽'}</Text>
         </TouchableOpacity>
+    
         {isExpanded && (
           <View style={styles.details}>
             <Text style={styles.businessDays}>Alle Öffnungszeiten:</Text>
@@ -224,7 +277,6 @@ const StartScreen = () => {
       </TouchableOpacity>
     );
   };
-  
   
   const toggleModal = () => setModalVisible(!isModalVisible);
 
@@ -411,8 +463,10 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
       fontSize: 16,
     },
+    heart: {
+      marginRight: 20,
+    },
     
-  
 });
 
 export default StartScreen;
