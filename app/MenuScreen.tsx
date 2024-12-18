@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Modal, Button } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
 import { format, addDays } from 'date-fns';
 import { RootStackParamList } from './App';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type MenuScreenRouteProp = RouteProp<RootStackParamList, 'MenuScreen'>;
 
@@ -21,6 +22,7 @@ interface Badge {
 }
 
 interface Meal {
+  id: string;
   name: string;
   category: string;
   prices: Price[];
@@ -36,11 +38,14 @@ interface DayMenu {
   meals: Meal[];
 }
 
+const likedFilePath = `${FileSystem.documentDirectory}/data/liked_menus.json`;
+
 const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
   const { canteenId } = route.params;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dayMenus, setDayMenus] = useState<DayMenu[]>([]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [likedMenus, setLikedMenus] = useState<{ canteenId: string; menuId: string; menuName: string }[]>([]);
   const [searchText, setSearchText] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
@@ -69,6 +74,29 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
     fetchMenus();
   }, [canteenId]);
 
+  // Likes laden bei erstem Rendern und wenn der Screen in den Fokus kommt
+  const loadLikedMenus = useCallback(async () => {
+    try {
+      const fileExists = await FileSystem.getInfoAsync(likedFilePath);
+      if (fileExists.exists) {
+        const fileContent = await FileSystem.readAsStringAsync(likedFilePath);
+        setLikedMenus(JSON.parse(fileContent));
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Likes:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLikedMenus();
+  }, [loadLikedMenus]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadLikedMenus();
+    }, [loadLikedMenus])
+  );
+
   const handleDateChange = (days: number) => {
     setSelectedDate((prevDate) => addDays(prevDate, days));
   };
@@ -83,6 +111,21 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
       }
       return newSet;
     });
+  };
+
+  const toggleLike = async (menuId: string, menuName: string) => {
+    const isLiked = likedMenus.some((item) => item.menuId === menuId && item.canteenId === canteenId);
+    const updatedLikes = isLiked
+      ? likedMenus.filter((item) => !(item.menuId === menuId && item.canteenId === canteenId))
+      : [...likedMenus, { canteenId, menuId, menuName }];
+  
+    setLikedMenus(updatedLikes);
+  
+    try {
+      await FileSystem.writeAsStringAsync(likedFilePath, JSON.stringify(updatedLikes));
+    } catch (error) {
+      console.error('Fehler beim Speichern der Likes:', error);
+    }
   };
 
   const applyFilters = () => {
@@ -135,7 +178,7 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
       matchesVegan &&
       matchesVegetarian
     );
-  });  
+  });
 
   return (
     <View style={styles.container}>
@@ -224,53 +267,82 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
       </Modal>
       {filteredMeals ? (
         <FlatList
-          data={filteredMeals}
-          keyExtractor={(item, index) => `${item.name}-${index}`}
-          renderItem={({ item }) => {
-            const isExpanded = expandedMenus.has(item.name);
+        data={filteredMeals}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          const isExpanded = expandedMenus.has(item.name);
+          const isLiked = likedMenus.some(
+            (likedItem) => likedItem.menuId === item.id && likedItem.canteenId === canteenId
+          );
+      
+          return (
+            <View style={styles.menuItem}>
+              {/* Name und Like-Button mit Toggle-Funktion */}
+              <TouchableOpacity
+                onPress={() => toggleMenuExpansion(item.name)}
+                style={styles.menuNameContainer}
+              >
+                {/* Menüname */}
+                <Text style={styles.menuName}>{item.name}</Text>
 
-            return (
-              <View style={styles.menuItem}>
-                <TouchableOpacity onPress={() => toggleMenuExpansion(item.name)}>
-                  <Text style={styles.menuName}>{item.name}</Text>
+                {/* Like-Button */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation(); // Verhindert, dass der Toggle ausgelöst wird
+                    toggleLike(item.id, item.name);
+                  }}
+                  style={styles.heartContainer}
+                >
+                  <Ionicons
+                    name={isLiked ? 'heart' : 'heart-outline'}
+                    size={22}
+                    color={isLiked ? 'red' : 'black'}
+                  />
                 </TouchableOpacity>
-                {isExpanded && (
-                  <View style={styles.menuDetails}>
-                    <Text style={styles.menuCategory}>Kategorie: {item.category}</Text>
-                    <Text style={styles.menuPrices}>Preise:</Text>
-                    {item.prices.map((price, index) => (
-                      <Text key={index} style={styles.priceText}>
-                        {price.priceType}: {price.price.toFixed(2)} €
-                      </Text>
-                    ))}
-                    <Text style={styles.menuAdditives}>Zusatzstoffe:</Text>
-                    {item.additives.map((additive, index) => (
-                      <Text key={index} style={styles.additiveText}>{additive.text}</Text>
-                    ))}
-                    <Text style={styles.menuBadges}>Besonderheiten:</Text>
-                    {item.badges.map((badge, index) => (
-                      <Text key={index} style={styles.badgeText}>{badge.name}</Text>
-                    ))}
-                    <View style={styles.bilanzContainer}>
-                      <Text style={styles.menuBilanzLabel}>Wasserbilanz:</Text>
-                      <Text style={styles.menuBilanzValue}>{item.waterBilanz} Liter</Text>
-                    </View>
-                    <View style={styles.bilanzContainer}>
-                      <Text style={styles.menuBilanzLabel}>CO₂-Bilanz:</Text>
-                      <Text style={styles.menuBilanzValue}>{item.co2Bilanz} g</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            );
-          }}
-        />
-      ) : (
-        <Text style={styles.noMenuText}>Keine Menüs für das ausgewählte Datum verfügbar.</Text>
-      )}
-    </View>
-  );
-};
+
+                {/* Toggle-Pfeil */}
+                <Ionicons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={22}
+                  color="black"
+                />
+              </TouchableOpacity>
+
+              {/* Menüdetails */}
+              {isExpanded && (
+                <View style={styles.menuDetails}>
+                  <Text style={styles.menuCategory}>Kategorie: {item.category}</Text>
+                  <Text style={styles.menuPrices}>Preise:</Text>
+                  {item.prices.map((price, index) => (
+                    <Text key={index} style={styles.priceText}>
+                      {price.priceType}: {price.price.toFixed(2)} €
+                    </Text>
+                  ))}
+                  <Text style={styles.menuAdditives}>Zusatzstoffe:</Text>
+                  {item.additives.map((additive, index) => (
+                    <Text key={index} style={styles.additiveText}>
+                      {additive.text}
+                    </Text>
+                  ))}
+                  <Text style={styles.menuBadges}>Besonderheiten:</Text>
+                  {item.badges.map((badge, index) => (
+                    <Text key={index} style={styles.badgeText}>
+                      {badge.name}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        }}
+      />      
+    ) : (
+      <Text style={styles.noMenuText}>Keine Menüs für das ausgewählte Datum verfügbar.</Text>
+    )}
+  </View>
+);
+}  
+      
 
 const styles = StyleSheet.create({
   container: {
@@ -370,9 +442,11 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+
   menuName: {
     fontSize: 16,
     fontWeight: 'bold',
+    flex: 1,
   },
   menuDetails: {
     marginTop: 10,
@@ -446,6 +520,21 @@ const styles = StyleSheet.create({
   },
   priceTypeLabelSelected: {
     color: '#fff',
+  },
+  heartIcon: {
+    fontSize: 10,
+  },
+  menuNameContainer: {
+    flexDirection: 'row', // Elemente horizontal anordnen
+    justifyContent: 'space-between', // Abstand zwischen Name und Herz-Icon
+    alignItems: 'center', // Vertikal zentrieren
+    marginBottom: 10,
+    flex: 1,
+  },
+  heartContainer: {
+    justifyContent: 'center', // Vertikale Zentrierung
+    alignItems: 'center', // Horizontale Zentrierung
+    paddingHorizontal: 20, // Abstand innerhalb des Containers
   },
   
 });
