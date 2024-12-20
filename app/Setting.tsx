@@ -32,21 +32,48 @@ interface Canteen {
 const likedCanteenFilePath = `${FileSystem.documentDirectory}/data/liked_canteens.json`;
 const canteenDataFilePath = `${FileSystem.documentDirectory}/data/canteen_data.json`;
 const likedMenuFilePath = `${FileSystem.documentDirectory}/data/liked_menus.json`;
+const preferencesFilePath = `${FileSystem.documentDirectory}/data/preferences.json`;
+
+const preferenceOptions = [
+  { id: 'vegan', name: 'Vegan' },
+  { id: 'vegetarian', name: 'Vegetarisch' },
+  { id: 'high_protein', name: 'Proteinreich' },
+  { id: 'low_carb', name: 'Kohlenhydratarm' },
+  { id: 'gluten_free', name: 'Glutenfrei' },
+  { id: 'lactose_free', name: 'Laktosefrei' },
+];
 
 const Setting = () => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [likedCanteens, setLikedCanteens] = useState<LikedCanteen[]>([]);
   const [canteenMap, setCanteenMap] = useState<Record<string, string>>({});
   const [likedMenus, setLikedMenus] = useState<LikedMenu[]>([]);
+  const [preferences, setPreferences] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const initializeData = async () => {
       await loadCanteenData();
       await loadLikedCanteens();
       await loadLikedMenus();
+  
+      const fileExists = await FileSystem.getInfoAsync(preferencesFilePath);
+      if (fileExists.exists) {
+        const content = await FileSystem.readAsStringAsync(preferencesFilePath);
+        setPreferences(JSON.parse(content));
+      } else {
+        // Initialisiere Präferenzen mit Standardwerten (false)
+        const defaultPreferences = preferenceOptions.reduce(
+          (acc, option) => ({ ...acc, [option.id]: false }),
+          {}
+        );
+        setPreferences(defaultPreferences);
+        await FileSystem.writeAsStringAsync(preferencesFilePath, JSON.stringify(defaultPreferences));
+      }
     };
+  
     initializeData();
   }, []);
+  
 
   const loadLikedCanteens = async () => {
     try {
@@ -104,6 +131,12 @@ const Setting = () => {
     });
   };
 
+  const togglePreference = async (key: string) => {
+    const updatedPreferences = { ...preferences, [key]: !preferences[key] };
+    setPreferences(updatedPreferences);
+    await FileSystem.writeAsStringAsync(preferencesFilePath, JSON.stringify(updatedPreferences));
+  };
+
   const removeLikedCanteen = async (canteenId: string) => {
     const updatedLikes = likedCanteens.filter((item) => item.id !== canteenId);
     setLikedCanteens(updatedLikes);
@@ -120,8 +153,6 @@ const Setting = () => {
     'Präferenzen',
     'Gespeicherte Mensen',
     'Gespeicherte Gerichte',
-    'Benachrichtigungen',
-    'Berechtigungen',
     'Speicherdauer für Chat-Verläufe',
     'Hilfe',
   ];
@@ -198,6 +229,26 @@ const Setting = () => {
                 )}
               </View>
             )}
+              
+            {/* Präferenzen anzeigen */}
+            {isExpanded && section === 'Präferenzen' && (
+              <View style={styles.likedContainer}>
+                {Object.entries(preferences).map(([key, value]) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.preferenceItem,
+                      value ? styles.selected : styles.unselected,
+                    ]}
+                    onPress={() => togglePreference(key)}
+                  >
+                    <Text style={styles.preferenceText}>
+                      {preferenceOptions.find((option) => option.id === key)?.name || key}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
           </View>
         );
@@ -265,6 +316,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
   },
+  preferenceItem: {
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+  },
+  selected: {
+    backgroundColor: '#c8e6c9',
+  },
+  unselected: {
+    backgroundColor: '#f9f9f9',
+  },
+  preferenceText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  
 });
 
 export default Setting;
