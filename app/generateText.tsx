@@ -1,10 +1,20 @@
-import axios from 'axios';
+import { AI_KEY } from '@env';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-const API_KEY = '';
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+const API_KEY = AI_KEY;
 
-export const generateText = async (prompt: string): Promise<string> => {
+export const generateText = async (prompt: string, pageContext: string): Promise<string> => {
   try {
+    console.log('Sende Anfrage an Gemini API...');
+    const instruction = `
+      Hinweis an die KI:
+      Du bist ein einfacher und freundlicher Support-Assistent für eine Mensa-App. 
+      Antworte immer kurz, klar und freundlich, sodass auch neue Nutzer die App einfach verstehen können. In der App kann der Nutzer nur Mensen und Speisen in Berlin sehen. Abgesehen davon kann die App keine weiteren Funktionen anbieten.
+    `;
+    const fullPrompt = `${instruction}\n\n${pageContext}\n\n${prompt}`;
+    console.log('Gesamter Prompt:', fullPrompt);
+
     const response = await fetch(`${GEMINI_API_URL}?key=${API_KEY}`, {
       method: 'POST',
       headers: {
@@ -15,7 +25,7 @@ export const generateText = async (prompt: string): Promise<string> => {
           {
             parts: [
               {
-                text: prompt,
+                text: fullPrompt,
               },
             ],
           },
@@ -24,24 +34,17 @@ export const generateText = async (prompt: string): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Fehler: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Fehler bei der API-Anfrage: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('API Antwort:', JSON.stringify(data, null, 2)); // Ausgabe der vollständigen API-Antwort in lesbarem Format
+    console.log('Antwort von der API:', data);
 
-    // Zugriff auf das tatsächliche Textfeld in der Antwort
     const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!aiResponse) {
-      console.warn('Unerwartete API-Antwortstruktur oder leere Antwort:', JSON.stringify(data, null, 2));
-      return 'Die KI hat keine Antwort gegeben.';
-    }
-
-    return aiResponse;
+    return aiResponse || 'Die KI hat keine Antwort gegeben.';
   } catch (error) {
     console.error('Fehler bei der Anfrage an die Gemini API:', error);
     return 'Es ist ein Fehler aufgetreten.';
   }
 };
-
-export default generateText;
