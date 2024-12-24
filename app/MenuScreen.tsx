@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Modal, Button } from 'react-native';
-import { RouteProp, useFocusEffect } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
 import { format, addDays } from 'date-fns';
 import { RootStackParamList } from './App';
@@ -42,6 +42,7 @@ const likedFilePath = `${FileSystem.documentDirectory}/data/liked_menus.json`;
 
 const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
   const { canteenId } = route.params;
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dayMenus, setDayMenus] = useState<DayMenu[]>([]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
@@ -179,6 +180,10 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
       matchesVegetarian
     );
   });
+
+  const navigateToAIChat = () => {
+    navigation.navigate('AIChat', { currentPage: `menus/${canteenId}` });
+  };
 
   return (
     <View style={styles.container}>
@@ -339,9 +344,13 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
     ) : (
       <Text style={styles.noMenuText}>Keine Menüs für das ausgewählte Datum verfügbar.</Text>
     )}
-  </View>
-);
-}  
+  {/* Externer FloatingButton unten rechts */}
+  <TouchableOpacity style={styles.floatingButton} onPress={navigateToAIChat}>
+  <Ionicons name="chatbubble-ellipses-outline" size={28} color="#fff" />
+</TouchableOpacity>
+    </View>
+  );
+};
       
 
 const styles = StyleSheet.create({
@@ -349,6 +358,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#FFA537',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
   },
   header: {
     flexDirection: 'row',

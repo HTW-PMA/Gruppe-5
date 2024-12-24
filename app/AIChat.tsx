@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
 import { generateText } from './generateText';
 
 interface ChatEntry {
@@ -10,10 +11,50 @@ interface ChatEntry {
 }
 
 const AIChat = ({ route }: { route: any }) => {
-  const navigation = useNavigation(); // Für den Zurück-Button
-  const pageContext = route?.params?.pageContext || 'Kein Kontext verfügbar';
+  const navigation = useNavigation();
+  const currentPage = route?.params?.currentPage || 'preferences';
   const [inputText, setInputText] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<ChatEntry[]>([]);
+  const [pageContext, setPageContext] = useState<string>('');
+
+  // Kontext laden
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const dataPath = `${FileSystem.documentDirectory}data/`;
+        const currentFilePath = `${dataPath}${currentPage}.json`;
+        const preferencesPath = `${dataPath}preferences.json`;
+
+        const currentFileInfo = await FileSystem.getInfoAsync(currentFilePath);
+        const preferencesFileInfo = await FileSystem.getInfoAsync(preferencesPath);
+
+        let currentPageData = {};
+        let preferencesData = {};
+
+        if (currentFileInfo.exists && !currentFileInfo.isDirectory) {
+          const fileContent = await FileSystem.readAsStringAsync(currentFilePath);
+          currentPageData = JSON.parse(fileContent);
+        }
+
+        if (preferencesFileInfo.exists && !preferencesFileInfo.isDirectory) {
+          const preferencesContent = await FileSystem.readAsStringAsync(preferencesPath);
+          preferencesData = JSON.parse(preferencesContent);
+        }
+
+        const context = `
+          Aktuelle Seite: ${currentPage}
+          Inhalte: ${JSON.stringify(currentPageData, null, 2)}
+          Präferenzen: ${JSON.stringify(preferencesData, null, 2)}
+        `;
+        setPageContext(context);
+      } catch (error) {
+        console.error('Fehler beim Laden des Kontexts:', error);
+        setPageContext('Fehler beim Laden des Kontexts.');
+      }
+    };
+
+    fetchContext();
+  }, [currentPage]);
 
   const handleSend = async () => {
     if (inputText.trim()) {
@@ -37,13 +78,6 @@ const AIChat = ({ route }: { route: any }) => {
 
   return (
     <View style={styles.chatContainer}>
-      {/* Zurück-Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back-outline" size={24} color="#000" />
-        <Text style={styles.backButtonText}>Zurück</Text>
-      </TouchableOpacity>
-
-      {/* Chat-Inhalt */}
       <ScrollView style={styles.scrollView}>
         {chatHistory.map((entry, index) => (
           <View key={index} style={styles.messageContainer}>
@@ -88,16 +122,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 10,
     marginBottom: 10,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  backButtonText: {
-    marginLeft: 5,
-    fontSize: 16,
-    color: '#000',
   },
 });
 

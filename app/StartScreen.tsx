@@ -197,6 +197,10 @@ const StartScreen = () => {
       return newSet;
     });
   };
+
+  const navigateToAIChat = () => {
+    navigation.navigate('AIChat', { currentPage: 'canteen_data' });
+  };
   
   const renderCanteen = ({ item }: { item: Canteen }) => {
     const todayIndex = (getDay(new Date()) + 6) % 7;
@@ -328,6 +332,11 @@ const StartScreen = () => {
       ) : (
         <Text style={styles.noData}>Keine Daten verfügbar</Text>
       )}
+
+      {/* Externer FloatingButton unten rechts */}
+      <TouchableOpacity style={styles.floatingButton} onPress={navigateToAIChat}>
+        <Ionicons name="chatbubble-ellipses-outline" size={28} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -341,6 +350,18 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     marginBottom: 10,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#FFA537',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
   },
   searchInput: {
     flex: 1,
