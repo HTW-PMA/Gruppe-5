@@ -33,6 +33,7 @@ const likedCanteenFilePath = `${FileSystem.documentDirectory}/data/liked_canteen
 const canteenDataFilePath = `${FileSystem.documentDirectory}/data/canteen_data.json`;
 const likedMenuFilePath = `${FileSystem.documentDirectory}/data/liked_menus.json`;
 const preferencesFilePath = `${FileSystem.documentDirectory}/data/preferences.json`;
+const chatRetentionFilePath = `${FileSystem.documentDirectory}/data/chat_retention.json`;
 
 const preferenceOptions = [
   { id: 'vegan', name: 'Vegan' },
@@ -49,19 +50,19 @@ const Setting = () => {
   const [canteenMap, setCanteenMap] = useState<Record<string, string>>({});
   const [likedMenus, setLikedMenus] = useState<LikedMenu[]>([]);
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
+  const [chatRetentionDays, setChatRetentionDays] = useState<number>(1); // Standardwert: 1 Tag
 
   useEffect(() => {
     const initializeData = async () => {
       await loadCanteenData();
       await loadLikedCanteens();
       await loadLikedMenus();
-  
-      const fileExists = await FileSystem.getInfoAsync(preferencesFilePath);
-      if (fileExists.exists) {
+
+      const prefExists = await FileSystem.getInfoAsync(preferencesFilePath);
+      if (prefExists.exists) {
         const content = await FileSystem.readAsStringAsync(preferencesFilePath);
         setPreferences(JSON.parse(content));
       } else {
-        // Initialisiere Präferenzen mit Standardwerten (false)
         const defaultPreferences = preferenceOptions.reduce(
           (acc, option) => ({ ...acc, [option.id]: false }),
           {}
@@ -69,8 +70,19 @@ const Setting = () => {
         setPreferences(defaultPreferences);
         await FileSystem.writeAsStringAsync(preferencesFilePath, JSON.stringify(defaultPreferences));
       }
+
+      const retentionExists = await FileSystem.getInfoAsync(chatRetentionFilePath);
+      if (retentionExists.exists) {
+        const retentionContent = await FileSystem.readAsStringAsync(chatRetentionFilePath);
+        const parsedRetention = JSON.parse(retentionContent);
+        setChatRetentionDays(parsedRetention.chatRetentionDays || 1);
+      } else {
+        const defaultRetention = { chatRetentionDays: 1 };
+        await FileSystem.writeAsStringAsync(chatRetentionFilePath, JSON.stringify(defaultRetention));
+        setChatRetentionDays(1);
+      }
     };
-  
+
     initializeData();
   }, []);
   
@@ -118,6 +130,27 @@ const Setting = () => {
     }
 };
 
+const incrementRetentionDays = async () => {
+  if (chatRetentionDays < 7) {
+    const newRetentionDays = chatRetentionDays + 1;
+    setChatRetentionDays(newRetentionDays);
+    await FileSystem.writeAsStringAsync(
+      chatRetentionFilePath,
+      JSON.stringify({ chatRetentionDays: newRetentionDays })
+    );
+  }
+};
+
+const decrementRetentionDays = async () => {
+  if (chatRetentionDays > 1) {
+    const newRetentionDays = chatRetentionDays - 1;
+    setChatRetentionDays(newRetentionDays);
+    await FileSystem.writeAsStringAsync(
+      chatRetentionFilePath,
+      JSON.stringify({ chatRetentionDays: newRetentionDays })
+    );
+  }
+};
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
@@ -249,7 +282,28 @@ const Setting = () => {
                 ))}
               </View>
             )}
-
+          
+            {/* Speicherdauer für Chat-Verläufe */}
+            {isExpanded && section === 'Speicherdauer für Chat-Verläufe' && (
+              <View style={styles.chatRetentionContainer}>
+                <Text style={styles.label}>Speicherdauer (Tage):</Text>
+                <View style={styles.controlRow}>
+                  <TouchableOpacity
+                    style={styles.controlButton}
+                    onPress={decrementRetentionDays}
+                  >
+                    <Ionicons name="remove" size={20} color="#fff" />
+                  </TouchableOpacity>
+                  <Text style={styles.retentionDays}>{chatRetentionDays}</Text>
+                  <TouchableOpacity
+                    style={styles.controlButton}
+                    onPress={incrementRetentionDays}
+                  >
+                    <Ionicons name="add" size={20} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         );
       })}
@@ -333,6 +387,28 @@ const styles = StyleSheet.create({
   preferenceText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  chatRetentionContainer: {
+    padding: 15,
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  controlButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  retentionDays: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginHorizontal: 20,
   },
   
 });

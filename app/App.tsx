@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { NativeRouter } from 'react-router-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity  } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import * as FileSystem from 'expo-file-system';
 import LoadingScreen from './LoadingScreen';
 import StartScreen from './StartScreen';
@@ -66,21 +67,35 @@ const App = () => {
             />
           )}
           <Stack.Screen
-            name="StartScreen"
-            component={StartScreen}
-            options={{
-              title: 'Mensa Liste',
-            }}
-          />
+          name="StartScreen"
+          component={StartScreen}
+          options={({ navigation }) => ({
+            title: 'Mensa Liste',
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Setting')}
+                style={{ marginRight: 10 }}
+              >
+                <Icon name="settings-outline" size={24} color="#000" />
+              </TouchableOpacity>
+            ),
+          })}
+        />
           <Stack.Screen
-            name="MenuScreen"
-            component={MenuScreen}
-            options={({ route }) => {
-              const canteenId = route.params?.canteenId;
-              setCurrentPage(`menus/${canteenId || ''}`);
-              return { title: 'Mensa Menü' };
-            }}
-          />
+          name="MenuScreen"
+          component={MenuScreen}
+          options={({ navigation }) => ({
+            title: 'Mensa Menü',
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Setting')}
+                style={{ marginRight: 10 }}
+              >
+                <Icon name="settings-outline" size={24} color="#000" />
+              </TouchableOpacity>
+            ),
+          })}
+        />
           <Stack.Screen
             name="Setting"
             component={Setting}
