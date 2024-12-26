@@ -180,11 +180,11 @@ const StartScreen = () => {
     const updatedLikes = isLiked
       ? likedCanteens.filter((item) => item.id !== canteenId)
       : [...likedCanteens, { id: canteenId, name: canteenName }];
-  
+
     setLikedCanteens(updatedLikes);
-  
+
     await FileSystem.writeAsStringAsync(likedFilePath, JSON.stringify(updatedLikes));
-  };  
+  };
 
   const toggleExpand = (canteenId: string) => {
     setExpandedCanteens((prev) => {
@@ -201,17 +201,17 @@ const StartScreen = () => {
   const navigateToAIChat = () => {
     navigation.navigate('AIChat', { currentPage: 'canteen_data' });
   };
-  
+
   const renderCanteen = ({ item }: { item: Canteen }) => {
     const todayIndex = (getDay(new Date()) + 6) % 7;
     const todayHours = item.businessDays[todayIndex]?.businessHours || [];
     const isExpanded = expandedCanteens.has(item.id);
     const isLiked = likedCanteens.some((likedItem) => likedItem.id === item.id);
-  
+
     const hasNoBusinessHours = item.businessDays.every(
       (day: BusinessDay) => day.businessHours.length === 0
     );
-  
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -237,7 +237,7 @@ const StartScreen = () => {
                 : 'Geschlossen'}
             </Text>
           </View>
-    
+
           {/* Like-Button hinzufügen */}
           <TouchableOpacity onPress={() => toggleLike(item.id, item.name)}>
             <Ionicons
@@ -247,17 +247,17 @@ const StartScreen = () => {
               color={isLiked ? 'red' : 'black'}
             />
           </TouchableOpacity>
-    
+
           <Text style={styles.arrow}>›</Text>
         </View>
-    
+
         <TouchableOpacity
           onPress={() => toggleExpand(item.id)}
           style={styles.expandToggle}
         >
           <Text style={styles.expandArrow}>{isExpanded ? '△' : '▽'}</Text>
         </TouchableOpacity>
-    
+
         {isExpanded && (
           <View style={styles.details}>
             <Text style={styles.businessDays}>Alle Öffnungszeiten:</Text>
@@ -281,7 +281,7 @@ const StartScreen = () => {
       </TouchableOpacity>
     );
   };
-  
+
   const toggleModal = () => setModalVisible(!isModalVisible);
 
   return (
@@ -293,7 +293,7 @@ const StartScreen = () => {
           value={searchText}
           onChangeText={(text) => setSearchText(text)}
         />
-        <TouchableOpacity onPress={toggleModal} style={styles.filterButton}>
+        <TouchableOpacity onPress={toggleModal} style={styles.filterButton}  >
           <Text style={styles.filterText}>Filter</Text>
         </TouchableOpacity>
       </View>
@@ -302,6 +302,7 @@ const StartScreen = () => {
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Filter auswählen</Text>
           <TouchableOpacity
+              style={styles.filterRow}
             onPress={() =>
               setFilterOptions((prev) => ({ ...prev, nearest: !prev.nearest }))
             }
@@ -311,6 +312,7 @@ const StartScreen = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+              style={styles.filterRow}
             onPress={() =>
               setFilterOptions((prev) => ({ ...prev, open: !prev.open }))
             }
@@ -342,6 +344,22 @@ const StartScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  filterRow: {
+    backgroundColor: '#ccc', // Light background color for the card look
+  
+    borderRadius: 8,         // Rounded corners for the card style
+    paddingVertical: 15,     // Top and bottom padding for better row spacing
+    paddingHorizontal: 15,   // Left and right padding for internal spacing
+    marginBottom: 10,        // Space between rows
+    flexDirection: 'row',    // Align content horizontally
+    alignItems: 'center',    // Center vertically
+    justifyContent: 'space-between', // Space between checkbox and text
+    elevation: 3,            // Shadow for Android
+    shadowColor: '#000',     // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,           // Space between rows
+  },
   container: {
     flex: 1,
     padding: 10,
@@ -385,7 +403,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor:  '#A5D6A7',
     padding: 15,
     marginVertical: 10,
     borderRadius: 10,
@@ -469,6 +487,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalOption: {
+
     fontSize: 18,
     marginBottom: 15,
   },
@@ -487,7 +506,7 @@ const styles = StyleSheet.create({
     heart: {
       marginRight: 20,
     },
-    
+
 });
 
 export default StartScreen;

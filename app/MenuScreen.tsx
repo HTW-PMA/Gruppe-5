@@ -372,6 +372,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   header: {
+
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
   menuItem: {
     padding: 15,
     marginBottom: 10,
-    backgroundColor: '#fff',
+    backgroundColor:  '#A5D6A7',
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
