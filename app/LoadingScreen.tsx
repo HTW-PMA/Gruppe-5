@@ -51,8 +51,8 @@ const LoadingScreen = ({ onLoadingComplete }: { onLoadingComplete: () => void })
         console.log('File exists after save:', fileExists.exists);
 
         // 2. IDs extrahieren und Menüs abrufen
-        const startDate = format(addDays(new Date(), -7), 'yyyy-MM-dd'); // 7 Tage in der Vergangenheit
-        const endDate = format(addDays(new Date(), 7), 'yyyy-MM-dd'); // 7 Tage in der Zukunft
+        const startDate = format(addDays(new Date(), -30), 'yyyy-MM-dd'); // 7 Tage in der Vergangenheit
+        const endDate = format(addDays(new Date(), 30), 'yyyy-MM-dd'); // 7 Tage in der Zukunft
 
         for (const canteen of canteens) {
           const canteenId = canteen.id;
