@@ -22,26 +22,39 @@ const AIChat = ({ route }: { route: any }) => {
         const dataPath = `${FileSystem.documentDirectory}data/`;
         const currentFilePath = `${dataPath}currentPage.json`;
         const preferencesPath = `${dataPath}preferences.json`;
-
-        let currentPageData = {};
+  
+        let currentPageData: { currentPage?: string } = {};
         let preferencesData = {};
-
+        let currentPageFileContent = {};
+  
         const currentFileInfo = await FileSystem.getInfoAsync(currentFilePath);
         const preferencesFileInfo = await FileSystem.getInfoAsync(preferencesPath);
-
+  
+        // Lade `currentPage.json` und den referenzierten Dateiinhalt
         if (currentFileInfo.exists && !currentFileInfo.isDirectory) {
           const fileContent = await FileSystem.readAsStringAsync(currentFilePath);
           currentPageData = JSON.parse(fileContent);
+  
+          // Extrahiere den Pfad der referenzierten Datei
+          const referencedFilePath = `${dataPath}${currentPageData.currentPage}.json`;
+          const referencedFileInfo = await FileSystem.getInfoAsync(referencedFilePath);
+  
+          if (referencedFileInfo.exists && !referencedFileInfo.isDirectory) {
+            const referencedFileContent = await FileSystem.readAsStringAsync(referencedFilePath);
+            currentPageFileContent = JSON.parse(referencedFileContent);
+          } else {
+            console.warn(`Referenzierte Datei nicht gefunden: ${referencedFilePath}`);
+          }
         }
-
+  
         if (preferencesFileInfo.exists && !preferencesFileInfo.isDirectory) {
           const preferencesContent = await FileSystem.readAsStringAsync(preferencesPath);
           preferencesData = JSON.parse(preferencesContent);
         }
-
+  
         const context = `
-          Aktuelle Seite: ${currentFilePath}
-          Inhalte: ${JSON.stringify(currentPageData, null, 2)}
+          Aktuelle Seite: ${currentPageData.currentPage || 'Unbekannt'}
+          Inhalte: ${JSON.stringify(currentPageFileContent, null, 2)}
           Präferenzen: ${JSON.stringify(preferencesData, null, 2)}
         `;
         setPageContext(context);
@@ -50,10 +63,10 @@ const AIChat = ({ route }: { route: any }) => {
         setPageContext('Fehler beim Laden des Kontexts.');
       }
     };
-
+  
     fetchContext();
   }, []);
-
+  
   // Laden des Werts von defaultMaxAgeInDays aus der Datei
   useEffect(() => {
     const loadRetentionDays = async () => {

@@ -181,9 +181,23 @@ const MenuScreen = ({ route }: { route: MenuScreenRouteProp }) => {
     );
   });
 
-  const navigateToAIChat = () => {
-    navigation.navigate('AIChat', { currentPage: `menus/${canteenId}` });
+  const updateCurrentPage = async (pageName: string) => {
+    try {
+      const dataPath = `${FileSystem.documentDirectory}data/currentPage.json`;
+      console.log('Speichere aktuelle Seite in:', dataPath);
+      await FileSystem.writeAsStringAsync(dataPath, JSON.stringify({ currentPage: pageName }));
+      const fileContent = await FileSystem.readAsStringAsync(dataPath);
+      console.log('Gespeicherter Inhalt von currentPage.json:', fileContent);
+    } catch (error) {
+      console.error('Fehler beim Speichern der aktuellen Seite:', error);
+    }
   };
+
+  const navigateToAIChat = async () => {
+    const pageName = `menus/${canteenId}`;
+    await updateCurrentPage(pageName); // Update `currentPage.json`
+    navigation.navigate('AIChat', { currentPage: pageName });
+  };  
 
   return (
     <View style={styles.container}>

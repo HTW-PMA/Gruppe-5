@@ -143,6 +143,18 @@ const StartScreen = () => {
     applyFilters();
   }, [searchText, filterOptions, userLocation]);
 
+  useEffect(() => {
+    const autoNavigateToAIChat = async () => {
+      try {
+        await navigateToAIChat(); // Automatisch zur AIChat-Seite navigieren
+      } catch (error) {
+        console.error('Fehler beim automatischen Navigieren zur AIChat-Seite:', error);
+      }
+    };
+  
+    autoNavigateToAIChat();
+  }, []);  
+
   const applyFilters = () => {
     let filtered = canteens.filter(
       (canteen) =>
@@ -198,9 +210,22 @@ const StartScreen = () => {
     });
   };
 
-  const navigateToAIChat = () => {
-    navigation.navigate('AIChat', { currentPage: 'canteen_data' });
-  };
+  const updateCurrentPage = async (pageName: string) => {
+    try {
+      const dataPath = `${FileSystem.documentDirectory}data/currentPage.json`;
+      await FileSystem.writeAsStringAsync(dataPath, JSON.stringify({ currentPage: pageName }));
+      console.log('Aktuelle Seite gespeichert:', pageName);
+    } catch (error) {
+      console.error('Fehler beim Speichern der aktuellen Seite:', error);
+    }
+  };  
+
+  const navigateToAIChat = async () => {
+    console.log('navigateToAIChat Aufgerufen');
+    const pageName = 'canteen_data';
+    await updateCurrentPage(pageName); // Update `currentPage.json`
+    navigation.navigate('AIChat', { currentPage: pageName });
+  };  
 
   const renderCanteen = ({ item }: { item: Canteen }) => {
     const todayIndex = (getDay(new Date()) + 6) % 7;

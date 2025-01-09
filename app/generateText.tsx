@@ -1,7 +1,7 @@
 import { AI_KEY } from '@env';
 
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const API_KEY = AI_KEY;
 
 export const generateText = async (prompt: string, pageContext: string): Promise<string> => {
@@ -9,10 +9,9 @@ export const generateText = async (prompt: string, pageContext: string): Promise
     console.log('Sende Anfrage an Gemini API...');
     const instruction = `
       Hinweis an die KI:
-      Du bist ein einfacher und freundlicher Support-Assistent für eine Mensa-App. 
-      Antworte immer kurz, klar und freundlich, sodass auch neue Nutzer die App einfach verstehen können. In der App kann der Nutzer nur Mensen und Speisen in Berlin sehen. Abgesehen davon kann die App keine weiteren Funktionen anbieten.
+      Nutze den Context um die Fragen des Nutzers zu beantworten.
     `;
-    const fullPrompt = `${instruction}\n\n${pageContext}\n\n${prompt}`;
+    const fullPrompt = `${instruction}\n\n Context:\n${pageContext}\n\n Hier der Prompt des Nutzers: \n${prompt}`;
     console.log('Gesamter Prompt:', fullPrompt);
 
     const response = await fetch(`${GEMINI_API_URL}?key=${API_KEY}`, {
