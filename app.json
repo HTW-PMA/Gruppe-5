@@ -30,6 +30,9 @@
     },
     "plugins": [
       "expo-asset"
-    ]
+    ],
+    "developmentClient": {
+      "overlay": false
+    }
   }
 }
