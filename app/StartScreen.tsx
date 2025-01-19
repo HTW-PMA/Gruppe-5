@@ -449,14 +449,15 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   address: {
     fontSize: 14,
-    color: '#555',
+    color: '#FFFFFF',
   },
   todayHours: {
     fontSize: 14,
-    color: '#333',
+    color: '#FFFFFF',
     marginTop: 5,
   },
   toggleContainer: {
@@ -490,10 +491,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 10,
+    color: '#FFFFFF',
   },
   businessHours: {
     fontSize: 14,
-    color: '#555',
+    color: '#FFFFFF',
   },
   noData: {
     textAlign: 'center',

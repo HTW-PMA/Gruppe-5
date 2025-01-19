@@ -483,6 +483,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
+    color: '#FFFFFF',
   },
   menuDetails: {
     marginTop: 10,
@@ -490,6 +491,7 @@ const styles = StyleSheet.create({
   menuCategory: {
     fontStyle: 'italic',
     marginBottom: 5,
+    color: '#FFFFFF',
   },
   menuPrices: {
     fontWeight: 'bold',
@@ -497,6 +499,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     marginLeft: 10,
+    color: '#FFFFFF',
   },
   menuAdditives: {
     fontWeight: 'bold',
@@ -504,6 +507,7 @@ const styles = StyleSheet.create({
   },
   additiveText: {
     marginLeft: 10,
+    color: '#FFFFFF',
   },
   menuBadges: {
     fontWeight: 'bold',
@@ -511,6 +515,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     marginLeft: 10,
+    color: '#FFFFFF',
   },
   bilanzContainer: {
     flexDirection: 'row',
