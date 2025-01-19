@@ -306,20 +306,41 @@ const decrementRetentionDays = async () => {
             )}
             
  {/* Hilfe anzeigen */}
- {isExpanded && section === 'Hilfe' && (
-        <View style={styles.likedContainer}>
-          <View style={styles.questionContainer}>
-            <Text style={styles.question}>Was kann ich alles sehen und machen, wenn ich bei der Mensa-Liste bin?</Text>
-            <Text style={styles.answer}>
-              In der Mensa-Liste kannst du alle Mensen mit Standort, Straße, Hausnummer, Postleitzahl und Stadt sehen.
-              Du kannst die Öffnungszeiten einsehen, Mensen favorisieren und die verfügbaren Gerichte eines bestimmten
-              Tages anzeigen lassen. Über die Suchfunktion kannst du nach einer bestimmten Mensa suchen. Zudem kannst
-              du über den Chat-Button eine KI nutzen, um Fragen zu stellen.
-            </Text>
-          </View>
-          {/* Weitere Fragen und Antworten hier einfügen */}
-        </View>
-      )}
+{isExpanded && section === 'Hilfe' && (
+  <View style={styles.likedContainer}>
+    {[
+      {
+        question: 'Was kann ich alles sehen und machen, wenn ich bei der Mensa-Liste bin?',
+        answer: 'In der Mensa-Liste kannst du alle angezeigten Mensen mit Standort, Straße, Hausnummer, Postleitzahl und Stadt sehen. Du kannst die Öffnungszeiten einsehen, Mensen favorisieren und die verfügbaren Gerichte eines bestimmten Tages anzeigen lassen. Über die Suchfunktion kannst du nach einer bestimmten Mensa suchen. Zudem kannst du über den Chat-Button eine KI nutzen, um Fragen zu stellen. Wir haben auch eine Filterfunktion, mit der du auswählen kannst, ob dir Mensen in der Nähe, offene Mensen oder unbekannte Mensen angezeigt werden sollen.',
+      },
+      {
+        question: 'Wie kann ich meine Präferenz ändern?',
+        answer: 'Über das Zahnrad-Symbol gelangst du in die Einstellungen. Dort kannst du unter dem Punkt „Präferenzen“ deine Essensvorlieben aus den verfügbaren Optionen auswählen.',
+      },
+      {
+        question: 'Für was kann man die Einstellungen benutzen und was gibt es da?',
+        answer: 'In den Einstellungen findest du die wichtigsten Optionen unserer App. Über das Zahnrad-Symbol gelangst du in die Einstellungen. Dort kannst du: \n- Unter „Präferenzen“ deine Essensvorlieben anpassen.\n- Unter „Gespeicherte Mensen“ deine favorisierten Mensen anzeigen.\n- Unter „Gespeicherte Gerichte“ deine gespeicherten Gerichte einsehen.\n- Unter „Speicherdauer für Chatverläufe“ festlegen, wie lange die KI-Chatverläufe gespeichert bleiben (zwischen 1 und 7 Tagen).\n- Im Punkt „Hilfe“ Antworten auf häufige Fragen finden.',
+      },
+      {
+        question: 'Warum beantwortet die KI meine Frage über die Mensa nicht, wenn ich mich in den Einstellungen befinde?',
+        answer: 'Die KI kann nur Fragen zu dem Bereich beantworten, in dem du dich aktuell befindest. Wenn du dich in der Mensa-Liste befindest, kann die KI dir nur Fragen zu diesem Bereich beantworten. Das liegt daran, dass die KI nur die Daten der gerade aktiven Seite verwendet.',
+      },
+      {
+        question: 'Ich bin Angestellter bei einer Mensa und möchte dort essen. Wie kann ich herausfinden, wie viel der Preis für Angestellte ist?',
+        answer: 'Wenn du über die Mensa-Liste eine Mensa auswählst, werden dir die verfügbaren Gerichte angezeigt. Über die Filterfunktion kannst du den Preisbereich einstellen und zwischen Studenten-, Angestellten- und Gästepreisen wählen. Zusätzlich kannst du Besonderheiten wie „Vegan“ oder „Vegetarisch“ filtern und deine Auswahl mit „Anwenden“ bestätigen.',
+      },
+    ].map((faq, index) => (
+      <View key={index} style={styles.questionContainer}>
+        <TouchableOpacity onPress={() => toggleSection(`Hilfe-${index}`)}>
+          <Text style={styles.question}>{faq.question}</Text>
+        </TouchableOpacity>
+        {expandedSections.has(`Hilfe-${index}`) && (
+          <Text style={styles.answer}>{faq.answer}</Text>
+        )}
+      </View>
+    ))}
+  </View>
+)}
     </View>
   );
 })}
@@ -429,16 +450,21 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   question: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5,
     color: '#333',
   },
   answer: {
     fontSize: 14,
     color: '#555',
+    marginTop: 5,
   },
   
 });
