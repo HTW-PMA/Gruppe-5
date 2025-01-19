@@ -192,7 +192,6 @@ const decrementRetentionDays = async () => {
 
   return (
     <View style={styles.container}>
-      <TextInput style={styles.searchInput} placeholder="Suchen..." />
 
       {sections.map((section, index) => {
         const isExpanded = expandedSections.has(section);
@@ -303,13 +302,31 @@ const decrementRetentionDays = async () => {
                   </TouchableOpacity>
                 </View>
               </View>
+              
             )}
+            
+ {/* Hilfe anzeigen */}
+ {isExpanded && section === 'Hilfe' && (
+        <View style={styles.likedContainer}>
+          <View style={styles.questionContainer}>
+            <Text style={styles.question}>Was kann ich alles sehen und machen, wenn ich bei der Mensa-Liste bin?</Text>
+            <Text style={styles.answer}>
+              In der Mensa-Liste kannst du alle Mensen mit Standort, Straße, Hausnummer, Postleitzahl und Stadt sehen.
+              Du kannst die Öffnungszeiten einsehen, Mensen favorisieren und die verfügbaren Gerichte eines bestimmten
+              Tages anzeigen lassen. Über die Suchfunktion kannst du nach einer bestimmten Mensa suchen. Zudem kannst
+              du über den Chat-Button eine KI nutzen, um Fragen zu stellen.
+            </Text>
           </View>
-        );
-      })}
+          {/* Weitere Fragen und Antworten hier einfügen */}
+        </View>
+      )}
+    </View>
+  );
+})}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -409,6 +426,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     marginHorizontal: 20,
+  },
+  questionContainer: {
+    marginBottom: 15,
+  },
+  question: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333',
+  },
+  answer: {
+    fontSize: 14,
+    color: '#555',
   },
   
 });
